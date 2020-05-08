@@ -57,6 +57,9 @@ router.delete("/tasks/:id", auth, async (req, res) => {
   }
 });
 
+// GET /tasks?completed=true
+// GET /tasks?limit=10&skip=5
+// GET /tasks?sortBy=createdAt_desc
 router.get("/tasks", auth, async (req, res) => {
   try {
     //recherche par query (1ere methode)
@@ -64,7 +67,27 @@ router.get("/tasks", auth, async (req, res) => {
     //res.send(tasks);
 
     //recherche par fonction virtual de user (2nd methode)
-    await req.user.populate('tasks').execPopulate()
+    const match = {}
+    const sort = {}
+
+    if(req.query.completed){
+      match.completed = req.query.completed === 'true'
+    }
+
+    if(req.query.sortBy){
+      const parts = req.query.sortBy.split(':')
+      sort[parts[0]] = parts[1] === 'desc' ? -1 : 1
+
+    }
+    await req.user.populate({
+      path: 'tasks',
+      match,
+      options: {
+        limit: parseInt(req.query.limit),
+        skip: parseInt(req.query.skip),
+        sort
+      }
+    }).execPopulate()
     res.send(req.user.tasks)
 
   } catch (err) {

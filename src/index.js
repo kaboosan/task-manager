@@ -4,14 +4,36 @@ const userRouter = require("./routers/user")
 const userTask = require("./routers/task")
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3005;
 
-// //add middleware
-// app.use((req, res, next) => {
-//   res.status(503).send('Site is on maintenance mode')
-// })
+const multer = require('multer')
+const upload = multer({
+  dest: 'images',
+  limits: {
+    fileSize: 1000000 //1MB
+  },
+  fileFilter(req, file, cb){
+     if(!file.originalname.match(/\.(doc|docx)$/)){
+        return cb(new Error('Please upload a Word document'))
+     }   
 
-//Convert input json to object
+     cb(undefined, true)
+    
+    // cb(new Error('File must be a PDF'))
+    // cb(undefined, true)
+    // cb(undefined, false)
+  } 
+})
+
+const errorMiddleware = (req, res, next) => {
+  throw new Error("from my middleware")
+}
+app.post('/upload', errorMiddleware,  (req, res) => {
+  res.send()
+}, (error, req, res, next) => {
+  res.status(400).send({error: error.message})
+})
+
 app.use(express.json());
 app.use(userRouter)
 app.use(userTask)
